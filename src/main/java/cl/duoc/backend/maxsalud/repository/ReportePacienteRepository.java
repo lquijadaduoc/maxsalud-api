@@ -3,6 +3,7 @@ package cl.duoc.backend.maxsalud.repository;
 import cl.duoc.backend.maxsalud.dto.ReporteCompletoDTO;
 import cl.duoc.backend.maxsalud.dto.ReporteConDescuentosDTO;
 import cl.duoc.backend.maxsalud.dto.ReporteMorososDTO;
+import cl.duoc.backend.maxsalud.dto.PacienteFiltradoDTO;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.ParameterMode;
 import jakarta.persistence.PersistenceContext;
@@ -165,5 +166,71 @@ public class ReportePacienteRepository {
         }
         
         return reportes;
+    }
+
+    /**
+     * Ejecuta el procedimiento almacenado BUSCAR_PACIENTES_FILTRADOS
+     * @param edadDesde Edad mínima (default 0)
+     * @param edadHasta Edad máxima (default 120)
+     * @param tipoSalud Tipo de salud a filtrar (null = todos)
+     * @param tieneMorosidad 'SI', 'NO', 'TODOS'
+     * @return Lista de pacientes filtrados
+     */
+    public List<PacienteFiltradoDTO> buscarPacientesFiltrados(
+            Integer edadDesde, 
+            Integer edadHasta, 
+            String tipoSalud, 
+            String tieneMorosidad) {
+        
+        // Crear la llamada al procedimiento almacenado
+        StoredProcedureQuery query = entityManager.createStoredProcedureQuery("BUSCAR_PACIENTES_FILTRADOS");
+        
+        // Registrar parámetros por POSICIÓN
+        query.registerStoredProcedureParameter(1, Integer.class, ParameterMode.IN);  // p_edad_desde
+        query.registerStoredProcedureParameter(2, Integer.class, ParameterMode.IN);  // p_edad_hasta
+        query.registerStoredProcedureParameter(3, String.class, ParameterMode.IN);   // p_tipo_salud
+        query.registerStoredProcedureParameter(4, String.class, ParameterMode.IN);   // p_tiene_morosidad
+        query.registerStoredProcedureParameter(5, void.class, ParameterMode.REF_CURSOR); // p_resultado
+        
+        // Establecer parámetros (usar valores por defecto si son null)
+        query.setParameter(1, edadDesde != null ? edadDesde : 0);
+        query.setParameter(2, edadHasta != null ? edadHasta : 120);
+        // Si tipoSalud es "TODOS", pasar NULL al procedimiento
+        query.setParameter(3, (tipoSalud != null && !tipoSalud.equals("TODOS")) ? tipoSalud : null);
+        query.setParameter(4, tieneMorosidad != null ? tieneMorosidad.toUpperCase() : "TODOS");
+        
+        // Ejecutar el procedimiento
+        query.execute();
+        
+        // Obtener los resultados
+        @SuppressWarnings("unchecked")
+        List<Object[]> resultados = query.getResultList();
+        
+        // Convertir a DTO
+        return convertirAPacienteFiltrado(resultados);
+    }
+
+    private List<PacienteFiltradoDTO> convertirAPacienteFiltrado(List<Object[]> resultados) {
+        List<PacienteFiltradoDTO> pacientes = new ArrayList<>();
+        
+        for (Object[] fila : resultados) {
+            PacienteFiltradoDTO dto = new PacienteFiltradoDTO();
+            dto.setRun(toLong(fila[0]));
+            dto.setDv(toString(fila[1]));
+            dto.setNombre(toString(fila[2]));
+            dto.setEdad(toInteger(fila[3]));
+            dto.setDescuentoPorEdad(toBigDecimal(fila[4]));
+            dto.setTipoSalud(toString(fila[5]));
+            dto.setPlanSalud(toString(fila[6]));
+            dto.setTotalAtenciones(toLong(fila[7]));
+            dto.setTotalGastado(toBigDecimal(fila[8]));
+            dto.setAtencionesMorosas(toLong(fila[9]));
+            dto.setTotalMultas(toBigDecimal(fila[10]));
+            dto.setEstado(toString(fila[11]));
+            
+            pacientes.add(dto);
+        }
+        
+        return pacientes;
     }
 }

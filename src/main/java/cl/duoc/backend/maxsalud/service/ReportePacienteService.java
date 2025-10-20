@@ -1,5 +1,6 @@
 package cl.duoc.backend.maxsalud.service;
 
+import cl.duoc.backend.maxsalud.dto.PacienteFiltradoDTO;
 import cl.duoc.backend.maxsalud.repository.ReportePacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -64,5 +65,53 @@ public class ReportePacienteService {
         }
         
         return reporteRepository.generarReportePacientes(tipoNormalizado);
+    }
+
+    /**
+     * Busca pacientes con filtros personalizados
+     * @param edadDesde Edad mínima
+     * @param edadHasta Edad máxima
+     * @param tipoSalud Tipo de salud (puede ser null)
+     * @param tieneMorosidad 'SI', 'NO', 'TODOS'
+     * @return Lista de pacientes filtrados
+     */
+    @Transactional(readOnly = true)
+    public List<PacienteFiltradoDTO> buscarPacientesFiltrados(
+            Integer edadDesde,
+            Integer edadHasta,
+            String tipoSalud,
+            String tieneMorosidad) {
+        
+        // Validar parámetros
+        if (edadDesde != null && edadDesde < 0) {
+            throw new IllegalArgumentException("La edad desde no puede ser negativa");
+        }
+        
+        if (edadHasta != null && edadHasta > 120) {
+            throw new IllegalArgumentException("La edad hasta no puede ser mayor a 120");
+        }
+        
+        if (edadDesde != null && edadHasta != null && edadDesde > edadHasta) {
+            throw new IllegalArgumentException("La edad desde no puede ser mayor que la edad hasta");
+        }
+        
+        // Validar tieneMorosidad
+        if (tieneMorosidad != null && !tieneMorosidad.isEmpty()) {
+            String morosidadNormalizada = tieneMorosidad.toUpperCase().trim();
+            if (!morosidadNormalizada.equals("SI") && 
+                !morosidadNormalizada.equals("NO") && 
+                !morosidadNormalizada.equals("TODOS")) {
+                throw new IllegalArgumentException(
+                    "Valor de morosidad inválido. Valores permitidos: SI, NO, TODOS"
+                );
+            }
+        }
+        
+        return reporteRepository.buscarPacientesFiltrados(
+            edadDesde,
+            edadHasta,
+            tipoSalud,
+            tieneMorosidad
+        );
     }
 }

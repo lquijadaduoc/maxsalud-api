@@ -1,5 +1,6 @@
 package cl.duoc.backend.maxsalud.controller;
 
+import cl.duoc.backend.maxsalud.dto.PacienteFiltradoDTO;
 import cl.duoc.backend.maxsalud.service.ReportePacienteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -117,6 +118,55 @@ public class ReportePacienteController {
             return ResponseEntity.badRequest().body(error);
         } catch (Exception e) {
             return manejarError(e, "Error al generar el reporte");
+        }
+    }
+
+    /**
+     * Endpoint para buscar pacientes con filtros personalizados
+     * GET http://localhost:8080/api/reportes/buscar?edadDesde=18&edadHasta=65&tipoSalud=Fonasa&tieneMorosidad=NO
+     * 
+     * Parámetros:
+     * - edadDesde: Edad mínima (opcional, default 0)
+     * - edadHasta: Edad máxima (opcional, default 120)
+     * - tipoSalud: Tipo de salud a filtrar (opcional, null = todos)
+     * - tieneMorosidad: SI, NO, TODOS (opcional, default TODOS)
+     * 
+     * @return Lista de pacientes filtrados según los criterios
+     */
+    @GetMapping("/buscar")
+    public ResponseEntity<?> buscarPacientesFiltrados(
+            @RequestParam(value = "edadDesde", required = false) Integer edadDesde,
+            @RequestParam(value = "edadHasta", required = false) Integer edadHasta,
+            @RequestParam(value = "tipoSalud", required = false) String tipoSalud,
+            @RequestParam(value = "tieneMorosidad", required = false) String tieneMorosidad) {
+        try {
+            List<PacienteFiltradoDTO> pacientes = reporteService.buscarPacientesFiltrados(
+                edadDesde,
+                edadHasta,
+                tipoSalud,
+                tieneMorosidad
+            );
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Búsqueda completada exitosamente");
+            response.put("filtros", Map.of(
+                "edadDesde", edadDesde != null ? edadDesde : 0,
+                "edadHasta", edadHasta != null ? edadHasta : 120,
+                "tipoSalud", tipoSalud != null ? tipoSalud : "TODOS",
+                "tieneMorosidad", tieneMorosidad != null ? tieneMorosidad : "TODOS"
+            ));
+            response.put("data", pacientes);
+            response.put("total", pacientes.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        } catch (Exception e) {
+            return manejarError(e, "Error al buscar pacientes con filtros");
         }
     }
 
