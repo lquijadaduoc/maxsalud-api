@@ -1,0 +1,81 @@
+# ==================================
+# CONFIGURACIÓN DE EJEMPLO PARA ORACLE CLOUD
+# ==================================
+# Copia este archivo como application.properties y actualiza con tus datos
+
+spring.application.name=maxsalud
+
+# ==================================
+# OPCIÓN 1: CONEXIÓN DIRECTA (Sin Wallet)
+# ==================================
+
+# URL de conexión a Oracle Cloud (conexión directa)
+# Formato: jdbc:oracle:thin:@//<host>:<puerto>/<nombre-servicio>
+# Ejemplo Oracle Cloud:
+# spring.datasource.url=jdbc:oracle:thin:@//adb.us-ashburn-1.oraclecloud.com:1522/g1a2b3c4d5e6f_mydb_medium.adb.oraclecloud.com
+# spring.datasource.url=jdbc:oracle:thin:@//your-oracle-cloud-host:1521/your-service-name
+
+# ==================================
+# OPCIÓN 2: CONEXIÓN CON WALLET (Recomendado para Oracle Cloud)
+# ==================================
+
+# URL usando TNS Name del wallet
+# Primero extrae el wallet en: d:\Proyectos Mios\maxsalud\wallet
+# Luego verifica el nombre del servicio en wallet/tnsnames.ora
+spring.datasource.url=jdbc:oracle:thin:@maxsaluddb_medium
+
+# Ruta al directorio del wallet (usar / o \\ en Windows)
+oracle.net.tns_admin=d:/Proyectos Mios/maxsalud/wallet
+spring.datasource.hikari.data-source-properties.oracle.net.tns_admin=d:/Proyectos Mios/maxsalud/wallet
+
+# ==================================
+# CREDENCIALES DE LA BASE DE DATOS
+# ==================================
+
+# Usuario y contraseña de la BASE DE DATOS (no del wallet)
+spring.datasource.username=ADMIN
+spring.datasource.password=your-database-password
+
+# Driver de Oracle
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+
+# ==================================
+# CONFIGURACIÓN DE JPA/HIBERNATE
+# ==================================
+
+# Dialecto de Oracle
+spring.jpa.database-platform=org.hibernate.dialect.OracleDialect
+
+# Mostrar SQL en consola (desarrollo)
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# No modificar esquema de BD (usar solo procedimientos existentes)
+spring.jpa.hibernate.ddl-auto=none
+
+# ==================================
+# CONFIGURACIÓN DEL SERVIDOR
+# ==================================
+
+# Puerto de la aplicación
+server.port=8080
+
+# ==================================
+# CONFIGURACIÓN DE LOGGING
+# ==================================
+
+# Nivel de log
+logging.level.root=INFO
+logging.level.cl.duoc.backend.maxsalud=DEBUG
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+
+# ==================================
+# CONFIGURACIÓN DE CONEXIÓN A BD
+# ==================================
+
+# Configuración del pool de conexiones HikariCP
+spring.datasource.hikari.connection-timeout=20000
+spring.datasource.hikari.maximum-pool-size=5
+spring.datasource.hikari.minimum-idle=2
+spring.datasource.hikari.idle-timeout=300000
